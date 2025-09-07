@@ -1,0 +1,77 @@
+# Default Spring Profile
+server:
+  port: 7001
+  error:
+    include-message: always
+
+#so we can access the actuator endpoints including metrics for thread info
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+
+
+logging:
+  level:
+    root: INFO
+    com.champlain: DEBUG
+    org.mongodb: OFF
+    org.springframework.boot.autoconfigure.mongo.embedded: OFF
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  data:
+    mongodb:
+      port: 0
+      database: enrollments
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.5
+
+app:
+  students-service:
+    host: localhost
+    port: 7002
+  courses-service:
+    host: localhost
+    port: 7003
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  data:
+    mongodb:
+      host: mongodb
+      port: 27017
+      database: enrollments
+      username: user
+      password: pwd
+      authentication-database: admin
+      embedded:
+        enabled: false
+
+app:
+  students-service:
+    host: students-service
+    port: 8080
+  courses-service:
+    host: courses-service
+    port: 8080
+
+
+server:
+  port: 8080

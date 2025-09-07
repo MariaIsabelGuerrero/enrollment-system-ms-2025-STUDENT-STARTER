@@ -1,0 +1,48 @@
+server:
+  port: 7003
+
+  error:
+    include-message: always
+
+logging:
+  level:
+    root: INFO
+    com.champlain: DEBUG
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  r2dbc:
+    url: r2dbc:h2:mem:///courses;DB_CLOSE_DELAY=-1;
+    username: user
+    password: pwd
+
+    #defer-datasource-initialization: true
+
+  sql:
+    init:
+      platform: psql # **** ADD THIS FOR TESTING PURPOSES - Add to edit configurations in the IDE***
+      mode: always
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  r2dbc:
+    url: r2dbc:postgresql://postgres:5432/courses
+    username: user
+    password: pwd
+
+  sql:
+    init:
+      platform: psql
+      mode: always
+
+server.port: 8080

@@ -1,0 +1,129 @@
+services:
+
+  enrollments-service:
+    build: enrollments-service
+    hostname: enrollments-service
+    container_name: enrollments-service
+    ports:
+      - "8081:8080"                                 # Map the container port to the host port - 8081
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - students-service
+      - courses-service
+      - mongodb
+
+
+  students-service:
+    build: students-service
+    hostname: students-service
+    container_name: students-service
+    ports:
+      - "8082:8080"                                 # Map the container port to the host port - 8082
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      mysql1:
+        condition: service_healthy
+
+  courses-service:
+    build: courses-service
+    hostname: courses-service
+    container_name: courses-service
+    ports:
+      - "8083:8080"                                 # Map the container port to the host port - 8083
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - postgres
+
+
+
+  mysql1:
+    image: mysql
+    hostname: mysql1
+    container_name: mysql_students
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpwd
+      - MYSQL_DATABASE=students-db
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=pwd
+    volumes:
+      - ./data/mysql1:/var/lib/mysql1
+      - ./data/init.d:/docker-entrypoint-initdb.d
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-uuser",
+          "-ppwd",
+          "-h",
+          "localhost",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  phpmyadmin1:
+    image: phpmyadmin:5.2.0
+    container_name: phpmyadmin_mysql_students
+    hostname: phpmyadmin1
+    links:
+      - mysql1
+    restart: always
+    ports:
+      - 5013:80
+    environment:
+      - PMA_ARBITRARY=1
+
+  postgres:
+    image: postgres
+    container_name: postgres_courses
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pwd
+      - POSTGRES_DB=courses
+    ports:
+      - 5432:5432
+
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_postgres_courses
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@gerard.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - 9000:80
+    depends_on:
+      - postgres
+
+  mongodb:
+    image: mongo
+    container_name: mongo_enrollments
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=user
+      - MONGO_INITDB_ROOT_PASSWORD=pwd
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express_mongo_enrollments
+    restart: always
+    ports:
+      - 8091:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=user
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=pwd
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:password@mongodb:27017
+      #to login, use admin and pass
+    depends_on:
+      - mongodb
