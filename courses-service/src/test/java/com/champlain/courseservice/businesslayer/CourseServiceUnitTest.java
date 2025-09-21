@@ -2,6 +2,9 @@ package com.champlain.courseservice.businesslayer;
 
 import com.champlain.courseservice.dataaccesslayer.Course;
 import com.champlain.courseservice.dataaccesslayer.CourseRepository;
+import com.champlain.courseservice.exceptionhandling.exceptions.CourseNotFoundException;
+import com.champlain.courseservice.exceptionhandling.exceptions.InvalidCourseIdException;
+import com.champlain.courseservice.exceptionhandling.exceptions.InvalidInputException;
 import com.champlain.courseservice.exceptionhandling.exceptions.NotFoundException;
 import com.champlain.courseservice.presentationlayer.CourseRequestModel;
 import com.champlain.courseservice.presentationlayer.CourseResponseModel;
@@ -16,8 +19,7 @@ import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -85,6 +87,48 @@ public class CourseServiceUnitTest {
                     return true;
                 })
                 .verifyComplete();
+
+        CourseNotFoundException ex1 = new CourseNotFoundException();
+        assertNotNull(ex1);
+
+        CourseNotFoundException ex2 = new CourseNotFoundException("test-id");
+        assertEquals("Course with id=test-id is not found", ex2.getMessage());
+
+        Throwable cause = new RuntimeException("Database error");
+        CourseNotFoundException ex3 = new CourseNotFoundException(cause);
+        assertEquals(cause, ex3.getCause());
+
+        CourseNotFoundException ex4 = new CourseNotFoundException("test-id", cause);
+        assertEquals("Course with id=test-id is not found", ex4.getMessage());
+        assertEquals(cause, ex4.getCause());
+
+
+        InvalidCourseIdException ex5 = new InvalidCourseIdException();
+        assertNotNull(ex5);
+
+        InvalidCourseIdException ex6 = new InvalidCourseIdException("invalid-id");
+        assertEquals("Course id=invalid-id is invalid", ex6.getMessage());
+
+        InvalidCourseIdException ex7 = new InvalidCourseIdException(cause);
+        assertEquals(cause, ex7.getCause());
+
+        InvalidCourseIdException ex8 = new InvalidCourseIdException("invalid-id", cause);
+        assertEquals("Course id=invalid-id is invalid", ex8.getMessage());
+        assertEquals(cause, ex8.getCause());
+
+
+        InvalidInputException ex9 = new InvalidInputException();
+        assertNotNull(ex9);
+
+        InvalidInputException ex10 = new InvalidInputException("Invalid input");
+        assertEquals("Invalid input", ex10.getMessage());
+
+        InvalidInputException ex11 = new InvalidInputException(cause);
+        assertEquals(cause, ex11.getCause());
+
+        InvalidInputException ex12 = new InvalidInputException("Invalid input", cause);
+        assertEquals("Invalid input", ex12.getMessage());
+        assertEquals(cause, ex12.getCause());
     }
 
     @Test
@@ -128,7 +172,7 @@ public class CourseServiceUnitTest {
 
     @Test
     void getCourseByCourseId_withNonExistingId_thenThrowNotFoundException() {
-        // Arrange
+        // Arrange - negative
         String nonExistingId = UUID.randomUUID().toString();
         when(courseRepository.findCourseByCourseId(nonExistingId))
                 .thenReturn(Mono.empty());
@@ -138,6 +182,8 @@ public class CourseServiceUnitTest {
                 .create(courseService.getCourseByCourseId(nonExistingId))
                 .expectError(NotFoundException.class)
                 .verify();
+
+
     }
 
     @Test
@@ -200,6 +246,7 @@ public class CourseServiceUnitTest {
                 .create(courseService.updateCourseByCourseId(Mono.just(updateRequest), nonExistingId))
                 .expectError(NotFoundException.class)
                 .verify();
+
     }
 
     @Test

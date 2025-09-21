@@ -35,6 +35,7 @@ class EnrollmentControllerUnitTest {
 
     @Test
     void whenGetEnrollmentByEnrollmentId_nonExisting_thenEnrollmentNotFoundException() {
+        //NEGATIVE TEST
         when(enrollmentService.getEnrollmentByEnrollmentId(TestData.NON_EXISTING_ENROLLMENTID))
                 .thenReturn(Mono.error(new EnrollmentNotFoundException(TestData.NON_EXISTING_ENROLLMENTID)));
 
@@ -80,7 +81,7 @@ class EnrollmentControllerUnitTest {
 
     @Test
     void addEnrollment_validEnrollment_enrollmentAdded() {
-        //arrange
+        //arrange - POSITIVE TEST
         EnrollmentResponseModel enrollmentResponseModel = new EnrollmentResponseModel(
                 "06a7d573-bcab-4db3-956f-773324b92a80",
                 2021,

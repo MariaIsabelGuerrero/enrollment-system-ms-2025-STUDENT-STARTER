@@ -181,10 +181,8 @@ class EnrollmentServiceUnitTest {
         when(enrollmentRepository.findEnrollmentByEnrollmentId(enrollmentId))
                 .thenReturn(Mono.just(testData.enrollment1));
 
-        //act
         Mono<EnrollmentResponseModel> result = enrollmentService.getEnrollmentByEnrollmentId(enrollmentId);
 
-        //assert
         StepVerifier.create(result)
                 .expectNextMatches(enrollmentResponseModel -> {
                     assertNotNull(enrollmentResponseModel);

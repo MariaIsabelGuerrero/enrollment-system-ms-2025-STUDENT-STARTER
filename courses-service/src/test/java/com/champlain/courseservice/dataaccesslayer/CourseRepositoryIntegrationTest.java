@@ -34,6 +34,7 @@ public class CourseRepositoryIntegrationTest {
     }
     @Test
     void findCourseByCourseId_shouldSucceedWhenExistingId(){
+        //positive
         String courseId = UUID.randomUUID().toString();
         Course course = Course.builder()
                 .courseId(courseId)
@@ -43,15 +44,12 @@ public class CourseRepositoryIntegrationTest {
                 .numCredits(3.0)
                 .department("Computer Science")
                 .build();
-
-
         StepVerifier.create(courseRepository.save(course))
                 .consumeNextWith(insertedCourse -> {
                     assertNotNull(insertedCourse);
                     assertEquals(course.getCourseId(), insertedCourse.getCourseId());
                 })
                 .verifyComplete();
-
         StepVerifier.create(courseRepository
                 .findCourseByCourseId(course.getCourseId()))
                 .consumeNextWith(foundCourse -> {
@@ -60,11 +58,11 @@ public class CourseRepositoryIntegrationTest {
 
                 })
                 .verifyComplete();
-
-
     }
     @Test
+    //negative
     void findCourseByCourseId_shouldFailWhenNonExistingId() {
+        //negative
         StepVerifier.create(courseRepository.findCourseByCourseId("non-existing-id"))
                 .expectComplete()
                 .verify();

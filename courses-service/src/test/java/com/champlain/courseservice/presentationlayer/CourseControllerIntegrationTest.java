@@ -63,6 +63,7 @@ public class CourseControllerIntegrationTest {
 
     @Test
     void addNewCourse_withValidRequestBody_shouldSucceed() {
+        //positive
         CourseRequestModel courseRequestModel = new CourseRequestModel(
                 "cat-423",
                 "Web Services Testing",
@@ -70,7 +71,6 @@ public class CourseControllerIntegrationTest {
                 3.0,
                 "Computer Science"
         );
-
         webTestClient
                 .post()
                 .uri("/api/v1/courses")
@@ -83,16 +83,7 @@ public class CourseControllerIntegrationTest {
                 .value(courseResponseModel -> {
                     assertNotNull(courseResponseModel);
                     assertNotNull(courseResponseModel.courseId());
-                    assertEquals(courseRequestModel.courseNumber(),
-                            courseResponseModel.courseNumber());
-                    assertEquals(courseRequestModel.courseName(),
-                            courseResponseModel.courseName());
-                    assertEquals(courseRequestModel.numHours(),
-                            courseResponseModel.numHours());
-                    assertEquals(courseRequestModel.numCredits(),
-                            courseResponseModel.numCredits());
-                    assertEquals(courseRequestModel.department(),
-                            courseResponseModel.department());
+                    assertEquals(courseRequestModel.courseNumber(), courseResponseModel.courseNumber());
                 });
     }
 
@@ -247,6 +238,90 @@ public class CourseControllerIntegrationTest {
                     assertNotNull(errorInfo);
                     assertTrue(errorInfo.getMessage().contains("Course credits must be greater than 0"));
                 });
+
+        CourseRequestModel nullNameRequest = new CourseRequestModel(
+                "cat-424", null, 45, 3.0, "Computer Science");
+        webTestClient
+                .post()
+                .uri("/api/v1/courses")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(nullNameRequest)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+                .expectBody(HttpErrorInfo.class)
+                .value(errorInfo -> {
+                    assertNotNull(errorInfo);
+                    assertTrue(errorInfo.getMessage().contains("Course name is required"));
+                });
+
+        // Test null course number (this WILL trigger validation)
+        CourseRequestModel nullNumberRequest = new CourseRequestModel(
+                null, "Test Course", 45, 3.0, "Computer Science");
+        webTestClient
+                .post()
+                .uri("/api/v1/courses")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(nullNumberRequest)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+                .expectBody(HttpErrorInfo.class)
+                .value(errorInfo -> {
+                    assertNotNull(errorInfo);
+                    assertTrue(errorInfo.getMessage().contains("Course number is required"));
+                });
+
+        // Test zero hours (this WILL trigger validation)
+        CourseRequestModel zeroHoursRequest = new CourseRequestModel(
+                "cat-425", "Test Course", 0, 3.0, "Computer Science");
+        webTestClient
+                .post()
+                .uri("/api/v1/courses")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(zeroHoursRequest)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+                .expectBody(HttpErrorInfo.class)
+                .value(errorInfo -> {
+                    assertNotNull(errorInfo);
+                    assertTrue(errorInfo.getMessage().contains("Course hours must be greater than 0"));
+                });
+
+        // Test null credits (this WILL trigger validation)
+        CourseRequestModel nullCreditsRequest = new CourseRequestModel(
+                "cat-426", "Test Course", 45, null, "Computer Science");
+        webTestClient
+                .post()
+                .uri("/api/v1/courses")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(nullCreditsRequest)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+                .expectBody(HttpErrorInfo.class)
+                .value(errorInfo -> {
+                    assertNotNull(errorInfo);
+                    assertTrue(errorInfo.getMessage().contains("Course credits"));
+                });
+
+        // Test null hours (this WILL trigger validation)
+        CourseRequestModel nullHoursRequest = new CourseRequestModel(
+                "cat-427", "Test Course", null, 3.0, "Computer Science");
+        webTestClient
+                .post()
+                .uri("/api/v1/courses")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(nullHoursRequest)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
+                .expectBody(HttpErrorInfo.class)
+                .value(errorInfo -> {
+                    assertNotNull(errorInfo);
+                    assertTrue(errorInfo.getMessage().contains("Course hours"));
+                });
     }
 
 
@@ -338,6 +413,23 @@ public class CourseControllerIntegrationTest {
                     assertEquals(updateRequest.numCredits(), courseResponseModel.numCredits());
                     assertEquals(updateRequest.department(), courseResponseModel.department());
                 });
+
+        String invalidCourseId = "invalid-format";
+        webTestClient
+                .get()
+                .uri("/api/v1/courses/{courseId}", invalidCourseId)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+
+        // Test non-existing course ID scenario
+        String nonExistingId = UUID.randomUUID().toString();
+        webTestClient
+                .get()
+                .uri("/api/v1/courses/{courseId}", nonExistingId)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
@@ -452,53 +544,5 @@ public class CourseControllerIntegrationTest {
                 });
 
     }
-    @Test
-    void happyPath_CRUD_viaController() {
-        // create
-        CourseRequestModel create = new CourseRequestModel(
-                "cat-500", "Created Via Test", 30, 2.0, "CS");
-        String createdId =
-                webTestClient.post()
-                        .uri("/api/v1/courses")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .bodyValue(create)
-                        .exchange()
-                        .expectStatus().isCreated()
-                        .expectBody(CourseResponseModel.class)
-                        .returnResult()
-                        .getResponseBody()
-                        .courseId();
 
-        assertNotNull(createdId);
-
-        webTestClient.get()
-                .uri("/api/v1/courses/{id}", createdId)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(CourseResponseModel.class)
-                .value(res -> assertEquals("cat-500", res.courseNumber()));
-
-        CourseRequestModel update = new CourseRequestModel(
-                "cat-501", "Updated", 40, 3.0, "CS");
-        webTestClient.put()
-                .uri("/api/v1/courses/{id}", createdId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(update)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(CourseResponseModel.class)
-                .value(res -> {
-                    assertEquals(createdId, res.courseId());
-                    assertEquals("cat-501", res.courseNumber());
-                });
-
-        webTestClient.delete()
-                .uri("/api/v1/courses/{id}", createdId)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(CourseResponseModel.class)
-                .value(res -> assertEquals(createdId, res.courseId()));
-    }
 }

@@ -33,7 +33,7 @@ public class CourseControllerUnitTest {
 
     @Test
     public void whenAddCourse_withInvalidHours_thenThrowInvalidInputException() {
-        //arrange
+        //negative
         CourseRequestModel courseRequestModel = new CourseRequestModel(
                 "cat-423",
                 "Web Services Testing",
@@ -45,16 +45,47 @@ public class CourseControllerUnitTest {
         Mono<ResponseEntity<CourseResponseModel>> result =
                 courseController.addCourse(Mono.just(courseRequestModel));
 
-        //act and assert
+
         StepVerifier.create(result)
                 .expectErrorMatches(e -> e instanceof InvalidInputException &&
                         e.getMessage().equals("Course hours must be greater than 0"))
+                .verify();
+
+        InvalidInputException ex1 = new InvalidInputException();
+        assertNotNull(ex1);
+
+        InvalidInputException ex2 = new InvalidInputException("Test message");
+        assertEquals("Test message", ex2.getMessage());
+
+        Throwable cause = new RuntimeException("Test cause");
+        InvalidInputException ex3 = new InvalidInputException(cause);
+        assertEquals(cause, ex3.getCause());
+
+        InvalidInputException ex4 = new InvalidInputException("Test message", cause);
+        assertEquals("Test message", ex4.getMessage());
+        assertEquals(cause, ex4.getCause());
+
+
+        CourseRequestModel nullNameRequest = new CourseRequestModel(
+                "cat-424", null, 45, 3.0, "Computer Science");
+        Mono<ResponseEntity<CourseResponseModel>> nullNameResult =
+                courseController.addCourse(Mono.just(nullNameRequest));
+        StepVerifier.create(nullNameResult)
+                .expectErrorMatches(e -> e instanceof InvalidInputException)
+                .verify();
+
+        CourseRequestModel invalidCreditsRequest = new CourseRequestModel(
+                "cat-425", "Test", 45, -1.0, "Computer Science");
+        Mono<ResponseEntity<CourseResponseModel>> invalidCreditsResult =
+                courseController.addCourse(Mono.just(invalidCreditsRequest));
+        StepVerifier.create(invalidCreditsResult)
+                .expectErrorMatches(e -> e instanceof InvalidInputException)
                 .verify();
     }
 
     @Test
     public void whenAddCourse_withValidData_thenReturnCourseResponseModel() {
-        //arrange
+        //positive
         CourseRequestModel courseRequestModel = new CourseRequestModel(
                 "cat-423",
                 "Web Services Testing",
@@ -225,52 +256,5 @@ public class CourseControllerUnitTest {
                         e.getMessage().contains("Course Id is invalid"))
                 .verify();
     }
-//    @Test
-//    void whenAddCourse_withMissingCourseNumber_thenThrowInvalidInputException() {
-//        // arrange
-//        CourseRequestModel req = new CourseRequestModel(
-//                null,
-//                "Web Services",
-//                45,
-//                3.0,
-//                "Computer Science"
-//        );
-//
-//        // act
-//        Mono<ResponseEntity<CourseResponseModel>> result =
-//                courseController.addCourse(Mono.just(req));
-//
-//        // assert
-//        StepVerifier.create(result)
-//                .expectErrorMatches(e -> e instanceof InvalidInputException &&
-//                        e.getMessage().contains("Course number is required"))
-//                .verify();
-//    }
-
-//    @Test
-//    void exceptionsPackage_smokeCoverage() {
-//        new InvalidCourseIdException();
-//        new InvalidCourseIdException("bad-id");
-//        new InvalidCourseIdException(new RuntimeException("x"));
-//        new InvalidCourseIdException("bad-id", new RuntimeException("x"));
-//
-//        new CourseNotFoundException();
-//        new CourseNotFoundException("abc");
-//        new CourseNotFoundException(new RuntimeException("x"));
-//        new CourseNotFoundException("abc", new RuntimeException("x"));
-//
-//        new InvalidInputException();
-//        new InvalidInputException("m");
-//        new InvalidInputException(new RuntimeException("x"));
-//        new InvalidInputException("m", new RuntimeException("x"));
-//
-//        new NotFoundException();
-//        new NotFoundException("m");
-//        new NotFoundException(new RuntimeException("x"));
-//        new NotFoundException("m", new RuntimeException("x"));
-//    }
-
-
-
 
 }

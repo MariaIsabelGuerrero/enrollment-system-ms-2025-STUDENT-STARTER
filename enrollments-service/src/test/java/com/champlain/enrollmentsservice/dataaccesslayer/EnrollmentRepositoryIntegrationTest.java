@@ -36,15 +36,12 @@ public class EnrollmentRepositoryIntegrationTest {
                 .semester(Semester.FALL)
                 .enrollmentYear(2025)
                 .build();
-
-        // Act
         StepVerifier.create(enrollmentRepository.save(enrollment))
                 .consumeNextWith(savedEnrollment -> {
                     assertNotNull(savedEnrollment);
                     assertEquals(enrollment.getEnrollmentId(), savedEnrollment.getEnrollmentId());
                 })
                 .verifyComplete();
-
         StepVerifier.create(enrollmentRepository.findEnrollmentByEnrollmentId(enrollmentId))
                 .consumeNextWith(foundEnrollment -> {
                     assertNotNull(foundEnrollment);

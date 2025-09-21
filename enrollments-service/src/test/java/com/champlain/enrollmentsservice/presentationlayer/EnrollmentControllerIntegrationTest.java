@@ -113,7 +113,7 @@ public class EnrollmentControllerIntegrationTest extends AbstractIntegrationClas
     @Test
     @Order(2)
     public void whenAddEnrollment_withNonExistingCourseId_thenThrowNotFoundException() {
-        //arrange
+        //arrange - NEGATIVE TEST
         try {
             mockGetStudentByStudentIdSuccess(testData.student1ResponseModel);
             mockGetCourseByCourseIdException(TestData.NON_EXISTING_COURSEID, 404);
@@ -141,14 +141,13 @@ public class EnrollmentControllerIntegrationTest extends AbstractIntegrationClas
     @Test
     @Order(3)
     public void whenAddValidEnrollmentRequest_thenReturnEnrollmentResponseModel() throws JsonProcessingException {
-        //arrange
+        //arrange - POSITIVE TEST
         try {
             mockGetStudentByStudentIdSuccess(testData.student1ResponseModel);
             mockGetCourseByCourseIdSuccess(testData.course1ResponseModel);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        //act
         webTestClient.post()
                 .uri("/api/v1/enrollments")
                 .contentType(APPLICATION_JSON)
